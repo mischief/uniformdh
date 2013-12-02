@@ -52,8 +52,8 @@ func New() *UniformDH {
 
 	udh.priv = big.NewInt(0)
 	udh.priv = udh.priv.SetBytes(udh.privStr)
-  // force the low bit to 0.
-  udh.priv.SetBit(udh.priv, 0, 0)
+	// force the low bit to 0.
+	udh.priv.SetBit(udh.priv, 0, 0)
 
 	flip := big.NewInt(0)
 	flip.Mod(udh.priv, big.NewInt(2))

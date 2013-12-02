@@ -1,8 +1,8 @@
 package uniformdh
 
 import (
+	"bytes"
 	"testing"
-  "bytes"
 )
 
 func TestUniformDH(t *testing.T) {
