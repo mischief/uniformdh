@@ -11,9 +11,17 @@ import (
 )
 
 var (
-	g        int64 = 2
-	groupLen       = 192
-	intSize        = 1536
+	// generator of group 5
+	g int64 = 2
+
+	// byte size of group 5
+	groupLen = 192
+
+	// bitsize of group 5
+	intSize = 1536
+
+	// 1536 bit MODP group 5 from RFC 3526
+	// equivalent to 2^1536 - 2^1472 - 1 + 2^64 * { [2^1406 pi] + 741804 }
 	mod      *big.Int
 	modBytes = []byte{
 		0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xC9, 0x0F, 0xDA, 0xA2,
@@ -36,8 +44,8 @@ var (
 )
 
 func init() {
-	mod = big.NewInt(0)
-	mod.SetBytes(modBytes)
+	// setup 1536 bit MODP group
+	mod = new(big.Int).SetBytes(modBytes)
 }
 
 type UniformDH struct {
@@ -48,19 +56,25 @@ type UniformDH struct {
 	sharedSecret *big.Int
 }
 
+// Create a new UniformDH instance
 func New() *UniformDH {
 	udh := &UniformDH{
 		privStr: make([]byte, groupLen),
 	}
 
+	// To pick a private UniformDH key, we pick a random 1536-bit number,
+	// and make it even by setting its low bit to 0. Let x be that private
+	// key, and X = g^x (mod p).
 	rand.Read(udh.privStr)
-
 	udh.priv = new(big.Int).SetBytes(udh.privStr)
-	// force the low bit to 0.
+
+	/// XXX: is setting this bit *and* modulo 2 necessary?
 	udh.priv.SetBit(udh.priv, 0, 0)
 
+	// When someone sends her public key to the other party, she randomly
+	// decides whether to send X or p-X. This makes the public key
+	// negligibly different from a uniform 1536-bit string
 	flip := new(big.Int).Mod(udh.priv, big.NewInt(2))
-
 	udh.priv.Sub(udh.priv, flip)
 
 	udh.pub = new(big.Int).Exp(big.NewInt(g), udh.priv, mod)
@@ -69,6 +83,7 @@ func New() *UniformDH {
 		udh.pub.Sub(mod, udh.pub)
 	}
 
+  /// XXX: handle erroneous situations better
 	if udh.priv.BitLen() > intSize {
 		panic("int too large")
 	}
@@ -76,7 +91,7 @@ func New() *UniformDH {
 	return udh
 }
 
-// return big endian public key
+// Returns big-endian public key
 func (udh *UniformDH) Public() []byte {
 	buf := make([]byte, groupLen)
 	pubBytes := udh.pub.Bytes()
@@ -86,7 +101,12 @@ func (udh *UniformDH) Public() []byte {
 	return buf
 }
 
+// Returns the shared secret, given the other party's public key
 func (udh *UniformDH) Secret(theirPubBytes []byte) []byte {
+	// When a party wants to calculate the shared secret, she
+	// raises the foreign public key to her private key. Note that both
+	// (p-Y)^x = Y^x (mod p) and (p-X)^y = X^y (mod p), since x and y are
+	// even.
 	theirPub := new(big.Int).SetBytes(theirPubBytes)
 	udh.sharedSecret = new(big.Int).Exp(theirPub, udh.priv, mod)
 
