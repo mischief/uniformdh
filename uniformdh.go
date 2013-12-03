@@ -1,3 +1,8 @@
+// Package uniformdh implements the UniformDH key exchange
+// algorithm as used in the obfs3 tor pluggable transport.
+//
+// See https://gitweb.torproject.org/pluggable-transports/obfsproxy.git/blob_plain/HEAD:/doc/obfs3/obfs3-protocol-spec.txt
+// for details.
 package uniformdh
 
 import (

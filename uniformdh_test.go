@@ -19,3 +19,20 @@ func TestUniformDH(t *testing.T) {
 		t.Logf("%X", bobSecret)
 	}
 }
+
+func BenchmarkUniformDH(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		alice := New()
+		bob := New()
+		alicePub, bobPub := alice.Public(), bob.Public()
+		aliceSecret, bobSecret := alice.Secret(bobPub), bob.Secret(alicePub)
+
+		if !bytes.Equal(aliceSecret, bobSecret) {
+			b.Fatalf("secret key differs")
+			b.Logf("alice: %d bytes", len(aliceSecret))
+			b.Logf("%X", aliceSecret)
+			b.Logf("bob: %d bytes", len(bobSecret))
+			b.Logf("%X", bobSecret)
+		}
+	}
+}
