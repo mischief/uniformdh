@@ -81,7 +81,7 @@ func New() *UniformDH {
 		udh.pub.Sub(&mod, &udh.pub)
 	}
 
-  /// XXX: handle erroneous situations better
+	/// XXX: handle erroneous situations better
 	if udh.priv.BitLen() > intSize {
 		panic("int too large")
 	}
@@ -90,29 +90,29 @@ func New() *UniformDH {
 }
 
 // Returns big-endian public key
-func (udh *UniformDH) Public() []byte {
-	buf := make([]byte, groupLen)
+func (udh *UniformDH) Public() *[192]byte {
+	var buf [192]byte
 	pubBytes := udh.pub.Bytes()
 
 	copy(buf[groupLen-len(pubBytes):], pubBytes)
 
-	return buf
+	return &buf
 }
 
 // Returns the shared secret, given the other party's public key
-func (udh *UniformDH) Secret(theirPubBytes []byte) []byte {
+func (udh *UniformDH) Secret(theirPubBytes *[192]byte) (secret *[192]byte) {
 	// When a party wants to calculate the shared secret, she
 	// raises the foreign public key to her private key. Note that both
 	// (p-Y)^x = Y^x (mod p) and (p-X)^y = X^y (mod p), since x and y are
 	// even.
-	theirPub := new(big.Int).SetBytes(theirPubBytes)
+	theirPub := new(big.Int).SetBytes(theirPubBytes[:])
 	udh.sharedSecret.Exp(theirPub, &udh.priv, &mod)
 
 	sharedBytes := udh.sharedSecret.Bytes()
 
-	buf := make([]byte, groupLen)
+	var buf [192]byte
 
 	copy(buf[groupLen-len(sharedBytes):], sharedBytes)
 
-	return buf
+	return &buf
 }

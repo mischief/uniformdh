@@ -11,7 +11,7 @@ func TestUniformDH(t *testing.T) {
 	alicePub, bobPub := alice.Public(), bob.Public()
 	aliceSecret, bobSecret := alice.Secret(bobPub), bob.Secret(alicePub)
 
-	if !bytes.Equal(aliceSecret, bobSecret) {
+	if !bytes.Equal(aliceSecret[:], bobSecret[:]) {
 		t.Fatalf("secret key differs")
 		t.Logf("alice: %d bytes", len(aliceSecret))
 		t.Logf("%X", aliceSecret)
@@ -27,7 +27,7 @@ func BenchmarkUniformDH(b *testing.B) {
 		alicePub, bobPub := alice.Public(), bob.Public()
 		aliceSecret, bobSecret := alice.Secret(bobPub), bob.Secret(alicePub)
 
-		if !bytes.Equal(aliceSecret, bobSecret) {
+		if !bytes.Equal(aliceSecret[:], bobSecret[:]) {
 			b.Fatalf("secret key differs")
 			b.Logf("alice: %d bytes", len(aliceSecret))
 			b.Logf("%X", aliceSecret)
