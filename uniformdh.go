@@ -22,7 +22,7 @@ var (
 
 	// 1536 bit MODP group 5 from RFC 3526
 	// equivalent to 2^1536 - 2^1472 - 1 + 2^64 * { [2^1406 pi] + 741804 }
-	mod      *big.Int
+	mod      big.Int
 	modBytes = []byte{
 		0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xC9, 0x0F, 0xDA, 0xA2,
 		0x21, 0x68, 0xC2, 0x34, 0xC4, 0xC6, 0x62, 0x8B, 0x80, 0xDC, 0x1C, 0xD1,
@@ -45,42 +45,40 @@ var (
 
 func init() {
 	// setup 1536 bit MODP group
-	mod = new(big.Int).SetBytes(modBytes)
+	mod.SetBytes(modBytes)
 }
 
 type UniformDH struct {
-	privStr      []byte
-	priv         *big.Int
+	priv         big.Int
 	pubStr       []byte
-	pub          *big.Int
-	sharedSecret *big.Int
+	pub          big.Int
+	sharedSecret big.Int
 }
 
 // Create a new UniformDH instance
 func New() *UniformDH {
-	udh := &UniformDH{
-		privStr: make([]byte, groupLen),
-	}
+	udh := &UniformDH{}
 
+	privStr := make([]byte, groupLen)
 	// To pick a private UniformDH key, we pick a random 1536-bit number,
 	// and make it even by setting its low bit to 0. Let x be that private
 	// key, and X = g^x (mod p).
-	rand.Read(udh.privStr)
-	udh.priv = new(big.Int).SetBytes(udh.privStr)
+	rand.Read(privStr)
+	udh.priv.SetBytes(privStr)
 
 	/// XXX: is setting this bit *and* modulo 2 necessary?
-	udh.priv.SetBit(udh.priv, 0, 0)
+	udh.priv.SetBit(&udh.priv, 0, 0)
 
 	// When someone sends her public key to the other party, she randomly
 	// decides whether to send X or p-X. This makes the public key
 	// negligibly different from a uniform 1536-bit string
-	flip := new(big.Int).Mod(udh.priv, big.NewInt(2))
-	udh.priv.Sub(udh.priv, flip)
+	flip := new(big.Int).Mod(&udh.priv, big.NewInt(2))
+	udh.priv.Sub(&udh.priv, flip)
 
-	udh.pub = new(big.Int).Exp(big.NewInt(g), udh.priv, mod)
+	udh.pub.Exp(big.NewInt(g), &udh.priv, &mod)
 
 	if flip.Uint64() == 1 {
-		udh.pub.Sub(mod, udh.pub)
+		udh.pub.Sub(&mod, &udh.pub)
 	}
 
   /// XXX: handle erroneous situations better
@@ -108,7 +106,7 @@ func (udh *UniformDH) Secret(theirPubBytes []byte) []byte {
 	// (p-Y)^x = Y^x (mod p) and (p-X)^y = X^y (mod p), since x and y are
 	// even.
 	theirPub := new(big.Int).SetBytes(theirPubBytes)
-	udh.sharedSecret = new(big.Int).Exp(theirPub, udh.priv, mod)
+	udh.sharedSecret.Exp(theirPub, &udh.priv, &mod)
 
 	sharedBytes := udh.sharedSecret.Bytes()
 
