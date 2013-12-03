@@ -55,18 +55,15 @@ func New() *UniformDH {
 
 	rand.Read(udh.privStr)
 
-	udh.priv = big.NewInt(0)
-	udh.priv = udh.priv.SetBytes(udh.privStr)
+	udh.priv = new(big.Int).SetBytes(udh.privStr)
 	// force the low bit to 0.
 	udh.priv.SetBit(udh.priv, 0, 0)
 
-	flip := big.NewInt(0)
-	flip.Mod(udh.priv, big.NewInt(2))
+	flip := new(big.Int).Mod(udh.priv, big.NewInt(2))
 
 	udh.priv.Sub(udh.priv, flip)
 
-	udh.pub = big.NewInt(0)
-	udh.pub.Exp(big.NewInt(g), udh.priv, mod)
+	udh.pub = new(big.Int).Exp(big.NewInt(g), udh.priv, mod)
 
 	if flip.Uint64() == 1 {
 		udh.pub.Sub(mod, udh.pub)
@@ -90,10 +87,8 @@ func (udh *UniformDH) Public() []byte {
 }
 
 func (udh *UniformDH) Secret(theirPubBytes []byte) []byte {
-	theirPub := big.NewInt(0)
-	theirPub.SetBytes(theirPubBytes)
-	udh.sharedSecret = big.NewInt(0)
-	udh.sharedSecret.Exp(theirPub, udh.priv, mod)
+	theirPub := new(big.Int).SetBytes(theirPubBytes)
+	udh.sharedSecret = new(big.Int).Exp(theirPub, udh.priv, mod)
 
 	sharedBytes := udh.sharedSecret.Bytes()
 
