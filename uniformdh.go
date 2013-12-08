@@ -66,9 +66,6 @@ func New() *UniformDH {
 	rand.Read(privStr)
 	udh.priv.SetBytes(privStr)
 
-	/// XXX: is setting this bit *and* modulo 2 necessary?
-	udh.priv.SetBit(&udh.priv, 0, 0)
-
 	// When someone sends her public key to the other party, she randomly
 	// decides whether to send X or p-X. This makes the public key
 	// negligibly different from a uniform 1536-bit string
